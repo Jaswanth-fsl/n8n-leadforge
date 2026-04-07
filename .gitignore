@@ -1,0 +1,8 @@
+﻿.env
+.env.*
+*.env
+N8N_ENCRYPTION_KEY
+**/node_modules/
+backups/*.tar.gz
+backups/*.sql
+audit-log.json
