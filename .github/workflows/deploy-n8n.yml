@@ -38,5 +38,5 @@ jobs:
           done
 
       - name: Health check
-        run: |
-          curl -f "${{ secrets.QA_N8N_URL }}/healthz"
+          run: |
+            curl -f "${{ secrets.QA_N8N_URL }}"
