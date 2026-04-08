@@ -1,0 +1,42 @@
+name: n8n CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Validate JSON
+        run: |
+          for file in workflows/*.json; do
+            echo "Checking $file"
+            cat $file | jq empty
+          done
+
+  deploy-qa:
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to QA
+        run: |
+          for file in workflows/*.json; do
+            curl -X POST "${{ secrets.QA_N8N_URL }}/api/v1/workflows/import" \
+              -H "X-N8N-API-KEY: ${{ secrets.QA_N8N_API_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d @$file
+          done
+
+      - name: Health check
+        run: |
+          curl -f "${{ secrets.QA_N8N_URL }}/healthz"

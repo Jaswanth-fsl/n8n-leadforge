@@ -1,0 +1,121 @@
+﻿
+version: '3.8'
+
+services:
+
+  redis-prod:
+
+    image: redis:7-alpine
+
+    container_name: leadforge-redis-prod
+
+    volumes:
+
+      - redis-prod-data:/data
+
+  n8n-prod:
+
+    image: n8nio/n8n:latest
+
+    container_name: leadforge-n8n-prod
+
+    ports:
+
+      - "5680:5678"
+
+    environment:
+
+      - DB_TYPE=postgresdb
+
+      - DB_POSTGRESDB_HOST=
+
+      - DB_POSTGRESDB_PORT=
+
+      - DB_POSTGRESDB_DATABASE=n8n_prod
+
+      - DB_POSTGRESDB_USER=
+
+      - DB_POSTGRESDB_PASSWORD=
+
+      - N8N_ENCRYPTION_KEY=
+
+      - N8N_HOST=localhost
+
+      - N8N_PORT=5680
+
+      - N8N_PROTOCOL=http
+
+      - WEBHOOK_URL=http://localhost:5680/
+
+      - EXECUTIONS_DATA_SAVE_ON_ERROR=all
+
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
+
+      - EXECUTIONS_DATA_MAX_AGE=168
+
+      - EXECUTIONS_MODE=queue
+
+      - QUEUE_BULL_REDIS_HOST=redis-prod
+
+      - QUEUE_BULL_REDIS_PORT=6379
+
+    volumes:
+
+      - n8n-prod-data:/home/node/.n8n
+
+    depends_on:
+
+      - redis-prod
+
+    extra_hosts:
+
+      - "host.docker.internal:host-gateway"
+
+  n8n-worker-prod:
+
+    image: n8nio/n8n:latest
+
+    container_name: leadforge-n8n-worker-prod
+
+    command: worker
+
+    environment:
+
+      - DB_TYPE=postgresdb
+
+      - DB_POSTGRESDB_HOST=
+
+      - DB_POSTGRESDB_PORT=
+
+      - DB_POSTGRESDB_DATABASE=n8n_prod
+
+      - DB_POSTGRESDB_USER=
+
+      - DB_POSTGRESDB_PASSWORD=
+
+      - N8N_ENCRYPTION_KEY=
+
+      - EXECUTIONS_MODE=queue
+
+      - QUEUE_BULL_REDIS_HOST=redis-prod
+
+      - QUEUE_BULL_REDIS_PORT=6379
+
+    volumes:
+
+      - n8n-prod-data:/home/node/.n8n
+
+    depends_on:
+
+      - redis-prod
+
+    extra_hosts:
+
+      - "host.docker.internal:host-gateway"
+
+volumes:
+
+  n8n-prod-data:
+
+  redis-prod-data:
+

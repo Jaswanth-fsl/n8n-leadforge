@@ -1,0 +1,13 @@
+﻿services:
+  n8n:
+    image: n8nio/n8n
+    ports:
+      - "5679:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ../../custom-nodes/n8n-nodes-leadforge:/home/node/.n8n/custom
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=false
+
+volumes:
+  n8n_data:

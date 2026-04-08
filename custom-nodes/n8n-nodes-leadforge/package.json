@@ -1,0 +1,22 @@
+{
+  "name": "n8n-nodes-leadforge",
+  "version": "1.0.0",
+  "description": "Custom LeadForge node",
+  "main": "dist/LeadForge.node.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "n8n": {
+    "nodes": [
+      "dist/LeadForge.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "ts-jest": "^29.4.9"
+  },
+  "dependencies": {
+    "n8n-workflow": "^2.13.1"
+  }
+}
