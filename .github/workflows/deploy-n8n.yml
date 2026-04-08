@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install jq
-        run: sudo apt-get install -y jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Validate JSON
         run: |
@@ -28,15 +28,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Deploy to QA
+      - name: Deploy workflows to QA
         run: |
           for file in workflows/*.json; do
-            curl -X POST "${{ secrets.QA_N8N_URL }}/api/v1/workflows/import" \
+            echo "Deploying $file to QA..."
+            curl -s -X POST "${{ secrets.QA_N8N_URL }}/api/v1/workflows/import" \
               -H "X-N8N-API-KEY: ${{ secrets.QA_N8N_API_KEY }}" \
               -H "Content-Type: application/json" \
               -d @$file
           done
 
-      - name: Health check
-          run: |
-            curl -f "${{ secrets.QA_N8N_URL }}"
+      - name: Health check QA
+        run: |
+          echo "Checking QA n8n health..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.QA_N8N_URL }}")
+          echo "HTTP Status: $response"
+
+          if [ "$response" -ne 200 ]; then
+            echo "❌ n8n is not reachable"
+            exit 1
+          fi
+
+          echo "✅ n8n is healthy"
