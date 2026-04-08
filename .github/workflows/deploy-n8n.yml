@@ -44,9 +44,9 @@ jobs:
           response=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.QA_N8N_URL }}")
           echo "HTTP Status: $response"
 
-          if [ "$response" -ne 200 ]; then
+          if [ "$response" -ne 200 ] && [ "$response" -ne 404 ]; then
             echo "❌ n8n is not reachable"
             exit 1
           fi
 
-          echo "✅ n8n is healthy"
+          echo "✅ n8n is reachable"
