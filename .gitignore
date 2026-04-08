@@ -6,3 +6,7 @@ N8N_ENCRYPTION_KEY
 backups/*.tar.gz
 backups/*.sql
 audit-log.json
+
+all-workflows.json
+
+all-workflows-final.json
