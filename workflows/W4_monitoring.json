@@ -1,0 +1,184 @@
+[
+  {
+    "updatedAt": "2026-04-08T07:02:44.690Z",
+    "createdAt": "2026-04-08T05:41:29.371Z",
+    "id": "kq4YlE3ZuS0FiTpF",
+    "name": "W4_monitoring",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "path": "leads/summary",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "de4cf632-4cba-4649-8306-407c34cbb7ae",
+        "name": "Webhook GET Summary",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "webhookId": "14ab76c4-80c4-49e6-8b6f-c9dc58867fd6"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  COUNT(*) FILTER (WHERE score >= 70) AS high_score_count,\n  COUNT(*) FILTER (WHERE score < 70 AND score >= 40) AS mid_score_count,\n  COUNT(*) FILTER (WHERE score < 40) AS low_score_count,\n  COUNT(*) AS total_today\nFROM leads\nWHERE created_at >= CURRENT_DATE\n  AND created_at < CURRENT_DATE + INTERVAL '1 day';",
+          "options": {}
+        },
+        "id": "a53653c2-27e2-46b0-93c4-27bd4c5e44fe",
+        "name": "Query Lead Counts",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          224,
+          0
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "S3QhRNcrvBHI20yE",
+            "name": "Postgres account 2"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const row = $input.first().json;\nconst today = new Date().toISOString().split('T')[0];\n\nreturn [{\n  json: {\n    date: today,\n    total_today: parseInt(row.total_today) || 0,\n    score_bands: {\n      high: parseInt(row.high_score_count) || 0,\n      mid: parseInt(row.mid_score_count) || 0,\n      low: parseInt(row.low_score_count) || 0\n    }\n  }\n}];"
+        },
+        "id": "294da812-d682-4fde-9e87-af97fd8d5dd4",
+        "name": "Format Summary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          480,
+          -96
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify($json) }}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "79d644dc-a14d-4cd0-964e-b8465a9b9046",
+        "name": "Respond JSON",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          672,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\"status\": \"error\", \"message\": \"Database query failed\"}",
+          "options": {
+            "responseCode": 500
+          }
+        },
+        "id": "0a85bde5-a8e1-4b59-9a6d-a9b767a55082",
+        "name": "Respond 500 Error",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          624,
+          240
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook GET Summary": {
+        "main": [
+          [
+            {
+              "node": "Query Lead Counts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query Lead Counts": {
+        "main": [
+          [
+            {
+              "node": "Format Summary",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond 500 Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Summary": {
+        "main": [
+          [
+            {
+              "node": "Respond JSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate"
+    },
+    "staticData": null,
+    "meta": {
+      "templateCredsSetupCompleted": true
+    },
+    "pinData": {},
+    "versionId": "719829d8-841f-476a-8426-db2774494da5",
+    "activeVersionId": "719829d8-841f-476a-8426-db2774494da5",
+    "versionCounter": 12,
+    "triggerCount": 1,
+    "tags": [
+      {
+        "updatedAt": "2026-04-08T05:36:28.668Z",
+        "createdAt": "2026-04-08T05:36:28.668Z",
+        "id": "fJatYNQ4gbwmkfoF",
+        "name": "leadforge"
+      }
+    ],
+    "shared": [
+      {
+        "updatedAt": "2026-04-08T05:41:29.384Z",
+        "createdAt": "2026-04-08T05:41:29.384Z",
+        "role": "workflow:owner",
+        "workflowId": "kq4YlE3ZuS0FiTpF",
+        "projectId": "EH6WgV2QBOkvmvKM",
+        "project": {
+          "updatedAt": "2026-03-25T11:48:43.675Z",
+          "createdAt": "2026-03-25T11:47:36.470Z",
+          "id": "EH6WgV2QBOkvmvKM",
+          "name": "Jaswanth Reddy <bodlapati.reddy@firstsource.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "0166b6c7-9172-4b81-a2ad-22195b40d69f"
+        }
+      }
+    ],
+    "versionMetadata": {
+      "name": "Version 719829d8",
+      "description": ""
+    }
+  }
+]

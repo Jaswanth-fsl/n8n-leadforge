@@ -1,0 +1,206 @@
+[
+  {
+    "updatedAt": "2026-04-08T06:55:01.967Z",
+    "createdAt": "2026-04-08T05:38:10.808Z",
+    "id": "TbjAvaGqTEE5ZYgb",
+    "name": "W3_lead-router",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "1a948092-e44b-4fee-89ad-b63c08325265",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          -448,
+          128
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "number": [
+              {
+                "value1": "={{ $json.score }}",
+                "operation": "largerEqual",
+                "value2": 70
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "44d99d1b-f8d9-4132-9618-96168ac4419b",
+        "name": "Score >= 70?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          -224,
+          128
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const lead = $('Execute Workflow Trigger').first().json;\nreturn [{\n  json: {\n    queue: 'nurture',\n    email: lead.email,\n    score: lead.score,\n    intent: lead.intent,\n    queued_at: new Date().toISOString(),\n    reason: 'Score below 70 — added to nurture sequence'\n  }\n}];"
+        },
+        "id": "712ad8c5-871e-4bd4-a0a4-8594cb721566",
+        "name": "Add to Nurture Queue",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          0,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "select": "channel",
+          "channelId": {
+            "__rl": true,
+            "value": "#general",
+            "mode": "name"
+          },
+          "text": "=🔥 New HIGH-SCORE Lead!  Name: {{ $json.first_name }} {{ $json.last_name }} Email: {{ $json.email }} Company: {{ $json.company || 'N/A' }} Score: {{ $json.score }}/100 Intent: {{ $json.intent }} Company Size: {{ $json.company_size }} Summary: {{ $json.summary }}",
+          "otherOptions": {}
+        },
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 2.4,
+        "position": [
+          16,
+          0
+        ],
+        "id": "104ae0b0-9ff7-4013-a549-59faf492811b",
+        "name": "Send a message",
+        "webhookId": "d8c65951-1906-4899-98cf-5d696fe7f876",
+        "credentials": {
+          "slackApi": {
+            "id": "bVfk4TwDNVomWR5f",
+            "name": "Slack account 3"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "sendTo": "jami01091999@gmail.com",
+          "subject": "\"Thanks for contacting LeadForge\"",
+          "message": "=<div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">\n  <p>\n    Hi {{ $('Execute Workflow Trigger').first().json.first_name || 'there' }},\n  </p>\n\n  <p>\n    Thank you for reaching out to <strong>LeadForge AI</strong>.\n  </p>\n\n  <div style=\"background:#f6f8fa; padding:12px; border-radius:6px;\">\n    <strong>Summary:</strong><br/>\n    Company: {{ $('Execute Workflow Trigger').first().json.company || 'N/A' }}<br/>\n    Intent: {{ $('Execute Workflow Trigger').first().json.intent }}<br/>\n    Score: {{ $('Execute Workflow Trigger').first().json.score }}/100\n  </div>\n\n  <p>We’ll follow up shortly.</p>\n\n  <p>— LeadForge Team</p>\n</div>",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "position": [
+          256,
+          96
+        ],
+        "id": "1f244161-fe80-4847-81d9-6a346bddaa39",
+        "name": "Send a message1",
+        "webhookId": "9075382e-1e0e-4297-a046-b10b5f5c9154",
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "XI6zFaC3kSL4Hx5b",
+            "name": "Gmail account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Score >= 70?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Score >= 70?": {
+        "main": [
+          [
+            {
+              "node": "Send a message",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Add to Nurture Queue",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Add to Nurture Queue": {
+        "main": [
+          [
+            {
+              "node": "Send a message1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send a message": {
+        "main": [
+          [
+            {
+              "node": "Send a message1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate"
+    },
+    "staticData": null,
+    "meta": {
+      "templateCredsSetupCompleted": true
+    },
+    "pinData": {},
+    "versionId": "0799060b-f46b-4336-a697-e2a0fc5cbece",
+    "activeVersionId": "0799060b-f46b-4336-a697-e2a0fc5cbece",
+    "versionCounter": 46,
+    "triggerCount": 0,
+    "tags": [
+      {
+        "updatedAt": "2026-04-08T05:36:28.668Z",
+        "createdAt": "2026-04-08T05:36:28.668Z",
+        "id": "fJatYNQ4gbwmkfoF",
+        "name": "leadforge"
+      }
+    ],
+    "shared": [
+      {
+        "updatedAt": "2026-04-08T05:38:10.856Z",
+        "createdAt": "2026-04-08T05:38:10.856Z",
+        "role": "workflow:owner",
+        "workflowId": "TbjAvaGqTEE5ZYgb",
+        "projectId": "EH6WgV2QBOkvmvKM",
+        "project": {
+          "updatedAt": "2026-03-25T11:48:43.675Z",
+          "createdAt": "2026-03-25T11:47:36.470Z",
+          "id": "EH6WgV2QBOkvmvKM",
+          "name": "Jaswanth Reddy <bodlapati.reddy@firstsource.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "0166b6c7-9172-4b81-a2ad-22195b40d69f"
+        }
+      }
+    ],
+    "versionMetadata": {
+      "name": "Version 0799060b",
+      "description": ""
+    }
+  }
+]

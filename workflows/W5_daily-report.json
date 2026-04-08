@@ -1,0 +1,198 @@
+[
+  {
+    "updatedAt": "2026-04-08T07:10:46.317Z",
+    "createdAt": "2026-04-08T05:41:56.226Z",
+    "id": "oxwgd4TYnVOBSb5B",
+    "name": "W5_daily-report",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 7 * * *"
+              }
+            ]
+          }
+        },
+        "id": "ca7cb9ed-6cd2-485e-8e7b-9aaf01a2a3f2",
+        "name": "Schedule 07:00",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  COUNT(*) AS total,\n  COUNT(*) FILTER (WHERE score >= 70) AS high_score,\n  COUNT(*) FILTER (WHERE score >= 40 AND score < 70) AS mid_score,\n  COUNT(*) FILTER (WHERE score < 40) AS low_score,\n  ROUND(AVG(score), 1) AS avg_score,\n  COUNT(DISTINCT intent) AS unique_intents,\n  MODE() WITHIN GROUP (ORDER BY intent) AS top_intent,\n  MODE() WITHIN GROUP (ORDER BY company_size) AS top_company_size\nFROM leads\nWHERE created_at >= CURRENT_DATE - INTERVAL '1 day'\n  AND created_at < CURRENT_DATE;",
+          "options": {}
+        },
+        "id": "32b739f4-d308-41b2-a217-01cc2c68d006",
+        "name": "Query Yesterday Leads",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          224,
+          0
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "S3QhRNcrvBHI20yE",
+            "name": "Postgres account 2"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const row = $input.first().json;\nconst yesterday = new Date();\nyesterday.setDate(yesterday.getDate() - 1);\nconst dateStr = yesterday.toISOString().split('T')[0];\n\nconst total = parseInt(row.total) || 0;\nconst high = parseInt(row.high_score) || 0;\nconst mid = parseInt(row.mid_score) || 0;\nconst low = parseInt(row.low_score) || 0;\nconst avg = parseFloat(row.avg_score) || 0;\n\nconst message = `:bar_chart: *LeadForge Daily Report — ${dateStr}*\\n\\n` +\n  `*Total Leads Processed:* ${total}\\n` +\n  `*Average Score:* ${avg}/100\\n\\n` +\n  `*Score Breakdown:*\\n` +\n  `:green_circle: High (≥70): ${high}\\n` +\n  `:yellow_circle: Mid (40–69): ${mid}\\n` +\n  `:red_circle: Low (<40): ${low}\\n\\n` +\n  `*Top Intent:* ${row.top_intent || 'N/A'}\\n` +\n  `*Top Company Size:* ${row.top_company_size || 'N/A'}\\n\\n` +\n  `_Sent automatically by LeadForge AI_`;\n\nreturn [{ json: { message, date: dateStr, total, high, mid, low, avg } }];"
+        },
+        "id": "a4667e82-33d3-433f-9b08-12614f7d911c",
+        "name": "Format Daily Digest",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          448,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Log the error but don't crash the workflow\nconsole.error('Daily report failed:', $json);\nreturn [{ json: { status: 'error', message: 'Daily report delivery failed', timestamp: new Date().toISOString() } }];"
+        },
+        "id": "320c539e-9dca-4980-aa54-502386461ffd",
+        "name": "Log Report Error",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          576,
+          272
+        ]
+      },
+      {
+        "parameters": {
+          "select": "channel",
+          "channelId": {
+            "__rl": true,
+            "value": "#ops",
+            "mode": "name"
+          },
+          "text": "={{ $json.message }}",
+          "otherOptions": {}
+        },
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 2.4,
+        "position": [
+          656,
+          0
+        ],
+        "id": "4ba249b8-bb0f-4801-906f-a853cdd7905a",
+        "name": "Send a message",
+        "webhookId": "3adc1297-f0db-4f13-82d7-0b244b9329c7",
+        "credentials": {
+          "slackApi": {
+            "id": "bVfk4TwDNVomWR5f",
+            "name": "Slack account 3"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Schedule 07:00": {
+        "main": [
+          [
+            {
+              "node": "Query Yesterday Leads",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query Yesterday Leads": {
+        "main": [
+          [
+            {
+              "node": "Format Daily Digest",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Log Report Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Daily Digest": {
+        "main": [
+          [
+            {
+              "node": "Send a message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate"
+    },
+    "staticData": {
+      "node:Schedule 07:00": {
+        "recurrenceRules": []
+      }
+    },
+    "meta": {
+      "templateCredsSetupCompleted": true
+    },
+    "pinData": {},
+    "versionId": "745d4658-be98-4e69-a7bf-ffe70d66f59f",
+    "activeVersionId": "b2c7f83e-33b2-4e2a-be40-c37b69264464",
+    "versionCounter": 20,
+    "triggerCount": 1,
+    "tags": [
+      {
+        "updatedAt": "2026-04-08T05:36:28.668Z",
+        "createdAt": "2026-04-08T05:36:28.668Z",
+        "id": "fJatYNQ4gbwmkfoF",
+        "name": "leadforge"
+      }
+    ],
+    "shared": [
+      {
+        "updatedAt": "2026-04-08T05:41:56.235Z",
+        "createdAt": "2026-04-08T05:41:56.235Z",
+        "role": "workflow:owner",
+        "workflowId": "oxwgd4TYnVOBSb5B",
+        "projectId": "EH6WgV2QBOkvmvKM",
+        "project": {
+          "updatedAt": "2026-03-25T11:48:43.675Z",
+          "createdAt": "2026-03-25T11:47:36.470Z",
+          "id": "EH6WgV2QBOkvmvKM",
+          "name": "Jaswanth Reddy <bodlapati.reddy@firstsource.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "0166b6c7-9172-4b81-a2ad-22195b40d69f"
+        }
+      }
+    ],
+    "versionMetadata": {
+      "name": null,
+      "description": null
+    }
+  }
+]

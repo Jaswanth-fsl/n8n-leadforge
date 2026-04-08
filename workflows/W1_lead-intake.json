@@ -1,0 +1,405 @@
+[
+  {
+    "updatedAt": "2026-04-08T06:48:18.503Z",
+    "createdAt": "2026-04-08T05:36:30.422Z",
+    "id": "oWMXMLgSM68ot9Yn",
+    "name": "W1_lead-intake",
+    "description": null,
+    "active": false,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "leads",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "b13b5f6c-3b48-4c5f-b0e1-6ae3309cc5a4",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "webhookId": "fe325fda-7ca6-4833-aba3-14c80ed6d3f9"
+      },
+      {
+        "parameters": {
+          "jsCode": "const body = $input.first().json.body ?? $input.first().json;\n\nconst required = ['email', 'first_name', 'last_name', 'message', 'source'];\nconst missing = required.filter(f => !body[f]);\n\nif (missing.length > 0) {\n  throw new Error(`Missing required fields: ${missing.join(', ')}`);\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRegex.test(body.email)) {\n  throw new Error(`Invalid email: ${body.email}`);\n}\n\nreturn [{\n  json: {\n    email: body.email.toLowerCase().trim(),\n    first_name: body.first_name.trim(),\n    last_name: body.last_name.trim(),\n    company: (body.company || '').trim(),\n    message: body.message.trim(),\n    source: body.source.trim()\n  }\n}];"
+        },
+        "id": "ee00688d-ab26-4be2-8e3e-e0d831af4dfe",
+        "name": "Validate Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          0
+        ],
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const lead = $input.first().json;\nconst { phone, address, raw_phone, full_address, ...clean } = lead;\nreturn [{ json: clean }];"
+        },
+        "id": "a9e9be76-341e-4ffc-9ec6-f3fbb495ba52",
+        "name": "Sanitise PII",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          448,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "schema": {
+            "value": "public",
+            "__rl": true,
+            "mode": "list"
+          },
+          "table": {
+            "value": "leads",
+            "__rl": true,
+            "mode": "list"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "email": "={{ $('Sanitise PII').first().json.email }}",
+              "company": "={{ $('Sanitise PII').first().json.company }}",
+              "score": "={{ Number($json.score ?? 0) }}",
+              "intent": "={{ $json.intent ?? 'unknown' }}",
+              "company_size": "={{ $json.company_size ?? 'unknown' }}",
+              "summary": "={{ $json.summary ?? '' }}",
+              "source": "={{ $('Sanitise PII').first().json.source }}"
+            },
+            "matchingColumns": [
+              "id"
+            ],
+            "schema": [
+              {
+                "id": "id",
+                "displayName": "id",
+                "required": false,
+                "defaultMatch": true,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "email",
+                "displayName": "email",
+                "required": true,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "company",
+                "displayName": "company",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "score",
+                "displayName": "score",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "intent",
+                "displayName": "intent",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "company_size",
+                "displayName": "company_size",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "summary",
+                "displayName": "summary",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "source",
+                "displayName": "source",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "created_at",
+                "displayName": "created_at",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "dateTime",
+                "canBeUsedToMatch": true,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "id": "c4f32f8a-e531-4eed-beb4-831c26e86f26",
+        "name": "Insert Lead to PostgreSQL",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          880,
+          0
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "S3QhRNcrvBHI20yE",
+            "name": "Postgres account 2"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({\n  status: 'accepted',\n  message: 'Lead processed successfully',\n  email_status: $json.labelIds?.includes('SENT') ? 'sent' : 'failed',\n  thread_id: $json.threadId ?? null,\n  message_id: $json.id ?? null\n}) }}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "df8f71d6-9d9a-4b20-86c3-ecf4369b6f20",
+        "name": "Respond 200 OK",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          1328,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ status: 'error', message: $json.error?.message ?? 'Validation failed' }) }}",
+          "options": {
+            "responseCode": 400
+          }
+        },
+        "id": "25f53f08-8fc0-426f-b42d-bd8db4a1080b",
+        "name": "Respond 400 Error",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          448,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "rSzES0NNMAq7nbsb",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/rSzES0NNMAq7nbsb",
+            "cachedResultName": "W2_ai-enrichment"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          656,
+          -64
+        ],
+        "id": "90fa23d6-f15a-4c62-bd3a-683ff754f18d",
+        "name": "Call 'W2_ai-enrichment'"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "TbjAvaGqTEE5ZYgb",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/TbjAvaGqTEE5ZYgb",
+            "cachedResultName": "W3_lead-router"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          1088,
+          -96
+        ],
+        "id": "e38f29d5-0376-4b40-8946-b1faddfd7ff1",
+        "name": "Call 'W3_lead-router'"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Validate Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Payload": {
+        "main": [
+          [
+            {
+              "node": "Sanitise PII",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond 400 Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sanitise PII": {
+        "main": [
+          [
+            {
+              "node": "Call 'W2_ai-enrichment'",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Lead to PostgreSQL": {
+        "main": [
+          [
+            {
+              "node": "Call 'W3_lead-router'",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond 400 Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call 'W2_ai-enrichment'": {
+        "main": [
+          [
+            {
+              "node": "Insert Lead to PostgreSQL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call 'W3_lead-router'": {
+        "main": [
+          [
+            {
+              "node": "Respond 200 OK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate"
+    },
+    "staticData": null,
+    "meta": {
+      "templateCredsSetupCompleted": true
+    },
+    "pinData": {},
+    "versionId": "8fd280d7-aff1-447c-818b-0eadc9e44956",
+    "activeVersionId": null,
+    "versionCounter": 85,
+    "triggerCount": 0,
+    "tags": [
+      {
+        "updatedAt": "2026-04-08T05:36:28.668Z",
+        "createdAt": "2026-04-08T05:36:28.668Z",
+        "id": "fJatYNQ4gbwmkfoF",
+        "name": "leadforge"
+      }
+    ],
+    "shared": [
+      {
+        "updatedAt": "2026-04-08T05:36:30.458Z",
+        "createdAt": "2026-04-08T05:36:30.458Z",
+        "role": "workflow:owner",
+        "workflowId": "oWMXMLgSM68ot9Yn",
+        "projectId": "EH6WgV2QBOkvmvKM",
+        "project": {
+          "updatedAt": "2026-03-25T11:48:43.675Z",
+          "createdAt": "2026-03-25T11:47:36.470Z",
+          "id": "EH6WgV2QBOkvmvKM",
+          "name": "Jaswanth Reddy <bodlapati.reddy@firstsource.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "0166b6c7-9172-4b81-a2ad-22195b40d69f"
+        }
+      }
+    ],
+    "versionMetadata": {
+      "name": null,
+      "description": null
+    }
+  }
+]
