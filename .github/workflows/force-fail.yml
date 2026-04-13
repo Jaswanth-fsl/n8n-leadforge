@@ -1,0 +1,12 @@
+name: Force Fail
+on:
+  push:
+    branches: [main]
+jobs:
+  fail:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail intentionally
+        run: |
+          echo "Simulating build failure..."
+          exit 1
