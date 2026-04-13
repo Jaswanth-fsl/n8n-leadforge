@@ -1,0 +1,12 @@
+name: Test CI Failure
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simulate npm failure
+        run: npm install this-package-does-not-exist-xyz-abc
