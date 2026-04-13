@@ -1,0 +1,15 @@
+name: Test Flaky Failure
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run flaky tests
+        run: |
+          echo "Running test suite..."
+          echo "FAIL: TypeError: Cannot read property 'data' of undefined"
+          echo "at async fetchUserData (src/api.ts:42:18)"
+          echo "Test suite failed to run -- intermittent network timeout"
+          echo "Error: jest timed out after 5000ms"
+          exit 1

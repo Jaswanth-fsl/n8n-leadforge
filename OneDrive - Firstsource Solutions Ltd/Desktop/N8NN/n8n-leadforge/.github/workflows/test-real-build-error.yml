@@ -1,0 +1,13 @@
+name: Test Real Build Error
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install TypeScript
+        run: npm install -g typescript
+      - name: Build
+        run: |
+          echo "const user: { name: string; age: number } = { name: 'John', age: 'not-a-number' };" > broken.ts
+          tsc broken.ts
