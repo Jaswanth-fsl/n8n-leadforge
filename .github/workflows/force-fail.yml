@@ -6,5 +6,8 @@ jobs:
   fail:
     runs-on: ubuntu-latest
     steps:
-      - name: Fail intentionally
-        run: exit 1
+      - name: This will fail
+        run: |
+          echo "failing now"
+          exit 1
+        shell: bash
