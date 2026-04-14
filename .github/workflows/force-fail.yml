@@ -7,6 +7,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fail intentionally
-        run: |
-          echo "Simulating build failure..."
-          exit 1
+        run: exit 1
