@@ -1,0 +1,27 @@
+name: Test Flaky Failure
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Run tests
+        run: |
+          npm init -y
+          npm install jest --save-dev
+          mkdir -p src/__tests__
+          cat > src/__tests__/api.test.js << 'EOF'
+          test('flaky network call', async () => {
+            await new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Network timeout after 5000ms — ECONNRESET')), 100)
+            );
+          });
+          EOF
+          npx jest --testTimeout=200 2>&1 || exit 1
