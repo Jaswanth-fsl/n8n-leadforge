@@ -1,25 +1,42 @@
-name: Cache Corruption Test
+name: Cache Corruption Test (Real)
 
 on:
-  workflow_dispatch:
+workflow_dispatch:
 
 jobs:
-  break-cache:
-    runs-on: ubuntu-latest
+break-cache:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+```
+steps:
+  - name: Checkout
+    uses: actions/checkout@v4
 
-      - name: Restore cache (fake key)
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: fake-cache-key
+  # Install dependencies first (creates cacheable content)
+  - name: Install dependencies
+    run: |
+      npm init -y
+      npm install lodash
 
-      - name: Simulate cache corruption
-        run: |
-          echo "Cache not found for input keys"
-          echo "Error: failed to restore cache"
-          echo "npm ERR! enoent ENOENT: no such file or directory"
-          exit 1
+  # Save cache properly
+  - name: Save cache
+    uses: actions/cache@v3
+    with:
+      path: ~/.npm
+      key: node-cache-${{ github.run_id }}
+
+  # 🔥 CORRUPT THE CACHE (REALISTIC)
+  - name: Corrupt cache manually
+    run: |
+      echo "Corrupting cache..."
+      rm -rf ~/.npm/_cacache/index-v5/*
+      echo "Cache corrupted successfully"
+
+  # 🔥 FORCE CACHE RESTORE FAILURE SIGNALS
+  - name: Simulate cache restore failure
+    run: |
+      echo "Error: failed to restore cache"
+      echo "Cache not found for input keys"
+      echo "npm ERR! enoent ENOENT: no such file or directory"
+      exit 1
+```
