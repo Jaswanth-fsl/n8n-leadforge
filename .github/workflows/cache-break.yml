@@ -10,16 +10,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ❗ Try to restore cache that doesn't exist
-      - name: Restore cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: invalid-cache-key
-
-      # ❗ FAIL only when cache is missing (realistic)
-      - name: Fail on cache miss
+      # Simulate REAL cache restore failure (no obvious fake exit)
+      - name: Fake cache restore failure
         run: |
-          echo "Cache not found for input keys"
+          echo "Restoring cache..."
           echo "Error: failed to restore cache"
-          exit 1
+          echo "Cache service unavailable"
+          sleep 2
+          false
