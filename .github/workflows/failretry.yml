@@ -1,0 +1,20 @@
+name: Retry Test1
+ 
+on:
+  workflow_dispatch:
+ 
+jobs:
+  flaky-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Random failure
+        run: |
+          echo "Running flaky test..."
+ 
+          # Random fail (50% chance)
+          if [ $((RANDOM % 2)) -eq 0 ]; then
+            echo "Flaky failure occurred"
+            exit 1
+          fi
+ 
+          echo "Success!"
