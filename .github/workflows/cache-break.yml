@@ -1,33 +1,30 @@
 name: Cache Corruption Test
 
 on:
-workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
-break-cache:
-runs-on: ubuntu-latest
+  break-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-```
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+      - name: Install deps
+        run: |
+          npm init -y
+          npm install lodash
 
-  - name: Install deps
-    run: |
-      npm init -y
-      npm install lodash
+      # ✅ CREATE CACHE
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: node-cache-${{ github.run_id }}
 
-  # ✅ CREATE CACHE
-  - name: Cache dependencies
-    uses: actions/cache@v3
-    with:
-      path: ~/.npm
-      key: node-cache-${{ github.run_id }}
-
-  # ✅ THEN FAIL (simulate issue)
-  - name: Simulate cache failure
-    run: |
-      echo "Error: failed to restore cache"
-      echo "Cache service unavailable"
-      exit 1
-```
+      # ✅ THEN FAIL (simulate issue)
+      - name: Simulate cache failure
+        run: |
+          echo "Error: failed to restore cache"
+          echo "Cache service unavailable"
+          exit 1
