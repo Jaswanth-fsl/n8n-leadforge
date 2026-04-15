@@ -17,8 +17,9 @@ jobs:
           path: ~/.npm
           key: fake-cache-key
 
-      - name: Force cache corruption error
+      - name: Simulate cache corruption
         run: |
-          echo "Cache restore failed"
+          echo "Cache not found for input keys"
+          echo "Error: failed to restore cache"
           echo "npm ERR! enoent ENOENT: no such file or directory"
           exit 1
