@@ -1,0 +1,24 @@
+name: Cache Corruption Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  break-cache:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore cache (fake key)
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: fake-cache-key
+
+      - name: Force cache corruption error
+        run: |
+          echo "Cache restore failed"
+          echo "npm ERR! enoent ENOENT: no such file or directory"
+          exit 1
