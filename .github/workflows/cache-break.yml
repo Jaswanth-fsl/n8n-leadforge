@@ -10,12 +10,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install deps
-        run: npm init -y
+      # ❗ Try to restore cache that doesn't exist
+      - name: Restore cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: invalid-cache-key
 
-      - name: Simulate cache issue
+      # ❗ FAIL only when cache is missing (realistic)
+      - name: Fail on cache miss
         run: |
-          echo "Error: failed to restore cache"
           echo "Cache not found for input keys"
-          echo "npm ERR! enoent ENOENT"
+          echo "Error: failed to restore cache"
           exit 1
