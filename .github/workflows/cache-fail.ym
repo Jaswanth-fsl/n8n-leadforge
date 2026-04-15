@@ -1,5 +1,5 @@
-name: Cache Corruption Test
-on: push
+name: Test Cache Failure
+on: workflow_dispatch
 
 jobs:
   build:
@@ -11,11 +11,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
 
-      - name: Create corrupted package.json
+      - name: Create package.json
         run: |
-          echo '{"name":"test","version":"1.0.0","dependencies":{"nonexistent-package-xyz-abc-123":"^99.99.99"}}' > package.json
+          echo '{"name":"test","version":"1.0.0","dependencies":{"lodash":"^4.17.21"}}' > package.json
 
-      - name: Install dependencies (will genuinely fail)
+      - name: Install with corrupted cache
         run: |
-          npm install --prefer-offline --cache ~/.npm
+          npm ci --cache /tmp/corrupted-cache-dir
