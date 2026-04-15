@@ -1,0 +1,26 @@
+name: Cache Corruption Test
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-corrupted-xyz123
+
+      - name: Install dependencies
+        run: |
+          npm install
+          
+      - name: Simulate cache corruption error
+        run: |
+          echo "FATAL ERROR: Cannot find module 'react'" 
+          echo "npm ERR! code ENOTCACHED"
+          echo "npm ERR! Cache data appears to be corrupted"
+          echo "npm ERR! A complete log of this run can be found in: /home/runner/.npm/_logs"
+          exit 1
