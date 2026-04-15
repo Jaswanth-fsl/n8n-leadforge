@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  cache-test:
+  create-cache:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -15,8 +15,7 @@ jobs:
         with:
           node-version: 18
 
-      - name: Restore cache
-        id: cache
+      - name: Cache dependencies
         uses: actions/cache@v3
         with:
           path: ~/.npm
@@ -25,13 +24,11 @@ jobs:
       - name: Install deps
         run: npm init -y && npm install lodash
 
-      - name: Save cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: node-cache-fixed-key
-
-      - name: Fail pipeline
+  fail-job:
+    runs-on: ubuntu-latest
+    needs: create-cache
+    steps:
+      - name: Simulate cache failure
         run: |
           echo "Error: failed to restore cache"
           echo "Cache service unavailable"
