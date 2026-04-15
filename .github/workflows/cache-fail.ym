@@ -6,21 +6,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: npm-${{ runner.os }}-corrupted-xyz123
 
-      - name: Install dependencies
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Create corrupted package.json
         run: |
-          npm install
-          
-      - name: Simulate cache corruption error
+          echo '{"name":"test","version":"1.0.0","dependencies":{"nonexistent-package-xyz-abc-123":"^99.99.99"}}' > package.json
+
+      - name: Install dependencies (will genuinely fail)
         run: |
-          echo "FATAL ERROR: Cannot find module 'react'" 
-          echo "npm ERR! code ENOTCACHED"
-          echo "npm ERR! Cache data appears to be corrupted"
-          echo "npm ERR! A complete log of this run can be found in: /home/runner/.npm/_logs"
-          exit 1
+          npm install --prefer-offline --cache ~/.npm
